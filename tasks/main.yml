@@ -53,3 +53,13 @@
     name: restic-backup.timer
     enabled: true
     state: started
+
+- name: Execute restic restore
+  ansible.builtin.command: >
+    {{ restic_path }} restore {{ restic_restore_snapshot }} --target {{ restic_restore_target }}
+  environment:
+    RESTIC_REPOSITORY: "{{ restic_repository if not restic_ssh_enabled else 'sftp:' + restic_ssh_host + ':' + restic_repository_name }}"
+    RESTIC_PASSWORD: "{{ restic_password }}"
+    AWS_ACCESS_KEY_ID: "{{ restic_aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ restic_aws_secret_access_key }}"
+  when: restic_restore_enabled

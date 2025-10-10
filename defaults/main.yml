@@ -30,3 +30,12 @@ restic_arch_map:
   i386: '386'
   x86_64: 'amd64'
   aarch64: 'arm64'
+
+# Restic restore options
+restic_restore_enabled: false
+restic_restore_target: "/"
+restic_restore_snapshot: "latest"
+restic_restore_folders: []
+
+restic_aws_access_key_id: ""
+restic_aws_secret_access_key: ""

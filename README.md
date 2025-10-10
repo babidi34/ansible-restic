@@ -35,6 +35,13 @@ Each database has a `name` property which will be the name of the restic snapsho
 - `restic_forget_keep_within`: period of time to use with `--keep-within` (`30d`)
 - `restic_prune`: run `restic prune` as `ExecStartPost` (`true`)
 
+### Restic restore options
+
+- `restic_restore_enabled`: enable or disable the restore functionality (`false`)
+- `restic_restore_target`: target directory for the restore (`/`)
+- `restic_restore_snapshot`: snapshot to restore (`latest`)
+- `restic_restore_folders`: list of folders to restore (empty by default)
+
 ### SSH/SFTP backend configuration
 
 The SSH configuration will be written in `{{ restic_user_home }}/.ssh/config`.
@@ -65,6 +72,22 @@ The timer is configurable as follows:
 See the [systemd.timer](https://www.freedesktop.org/software/systemd/man/systemd.timer.html) documentation for more information.
 
 You can see the logs of the backup with `journalctl`. (`journalctl -xefu restic-backup`).
+
+## Restic restore
+
+The role supports restoring data from a Restic repository. To enable the restore functionality, set the following variables:
+
+```yaml
+restic_restore_enabled: true
+restic_restore_target: "/"  # Default is "/"
+restic_restore_snapshot: "latest"  # or a specific snapshot ID
+# Optional: restore only specific folders
+restic_restore_folders:
+  - { path: "/etc" }
+  - { path: "/var/log" }
+```
+
+The restore will be executed automatically when the role is applied. Make sure to set `restic_restore_target` to the correct directory where you want the files to be restored.
 
 ## Example playbook
 
@@ -115,6 +138,39 @@ S3 example:
 ```
 
 Of course, `restic_password` and `restic_ssh_private_key` should be stored using ansible-vault.
+
+### Example with restore
+
+```yaml
+---
+- hosts: myhost
+  roles: restic
+  vars:
+    restic_ssh_user: backupuser
+    restic_ssh_hostname: storage-server.infra.tld
+    restic_folders:
+      - {path: "/srv"}
+      - {path: "/var/www"}
+    restic_databases:
+    - {name: website, dump_command: sudo -Hiu postgres pg_dump -Fc website}
+    - {name: website2, dump_command: mysqldump website2}
+    restic_password: mysuperduperpassword
+    restic_ssh_private_key: |-
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+      QyNTUxOQAAACAocs5g1I4kFQ1HH/YZiVU+zLhRDu4tfzZ9CmFAfKhL2AAAAJi02XEwtNlx
+      MAAAAAtzc2gtZWQyNTUxOQAAACAocs5g1I4kFQ1HH/YZiVU+zLhRDu4tfzZ9CmFAfKhL2A
+      AAAEADZf2Pv4G74x+iNtuwSV/ItnR3YQJ/KUaNTH19umA/tChyzmDUjiQVDUcf9hmJVT7M
+      uFEO7i1/Nn0KYUB8qEvYAAAAE3N0YW5pc2xhc0BtYnAubG9jYWwBAg==
+      -----END OPENSSH PRIVATE KEY-----
+    # Enable restore
+    restic_restore_enabled: true
+    restic_restore_target: "/"
+    restic_restore_snapshot: "latest"
+    restic_restore_folders:
+      - { path: "/etc" }
+      - { path: "/var/log" }
+```
 
 ## License
 
